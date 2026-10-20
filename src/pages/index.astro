@@ -42,6 +42,41 @@ const socialImage = thumbnail
     <meta name="viewport" content="width=device-width" />
     <meta name="generator" content={Astro.generator} />
 
+    <script is:inline>
+      (() => {
+        const navigation = performance.getEntriesByType("navigation")[0];
+        if (location.hash || navigation?.type === "back_forward") return;
+
+        // A plain entry or reload starts at the title. Preserve back/forward
+        // restoration, anchor links, and scrolling begun while the page loads.
+        let interacted = false;
+        const markInteraction = () => {
+          interacted = true;
+        };
+        const inputs = ["touchstart", "wheel", "keydown"];
+        inputs.forEach((type) =>
+          window.addEventListener(type, markInteraction, {
+            once: true,
+            passive: true,
+          }),
+        );
+        window.addEventListener(
+          "pageshow",
+          (event) => {
+            requestAnimationFrame(() => {
+              inputs.forEach((type) =>
+                window.removeEventListener(type, markInteraction),
+              );
+              if (!event.persisted && !interacted && !location.hash) {
+                window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+              }
+            });
+          },
+          { once: true },
+        );
+      })();
+    </script>
+
     <link rel="icon" type="image/svg+xml" href={prefix + favicon} />
 
     <meta property="og:title" content={title} />
