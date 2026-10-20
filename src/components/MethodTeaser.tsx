@@ -16,6 +16,9 @@ interface Props {
   alt: string;
 }
 
+// Center on the original legend artwork, which spans x = 221.09 to 417.45.
+const mobileLegendBox = "210.27 248 218 27";
+
 const serverMedia = () => false;
 function useMedia(query: string) {
   const subscribe = useCallback(
@@ -62,7 +65,7 @@ function MethodTeaserScene({
         variant="dynamic"
         crop={[353, 0, 285.251, 242]}
       />
-      <OriginalCrop src={src} box="234 248 218 27" />
+      <OriginalCrop src={src} box={mobileLegendBox} />
     </div>
   );
 }
@@ -84,7 +87,7 @@ function StaticMethod({ src, alt }: Props) {
       >
         <OriginalCrop src={src} box="-4 -4 342 250" />
         <OriginalCrop src={src} box="349 -4 293.251 250" />
-        <OriginalCrop src={src} box="234 248 218 27" />
+        <OriginalCrop src={src} box={mobileLegendBox} />
       </div>
     </div>
   );
