@@ -1,136 +1,95 @@
 ---
 import { Icon } from "astro-icon/components";
-
-type Author = {
-  name: string;
-  url?: string;
-  institution?: string;
-  notes?: string[];
-};
-
-type Note = {
-  symbol: string;
-  text: string;
-};
-
-type Link = {
-  url: string;
-  name: string;
-  icon?: string;
-};
-
-interface Props {
-  title: string;
-  authors: Author[];
-  conference?: string;
-  notes?: Note[];
-  links?: Link[];
-}
-
-const { title, authors, conference, notes, links } = Astro.props;
-
-const hasBackground = Astro.slots.has("background");
+const authors = [
+  { name: "Yi Wang", affiliation: "1", url: "https://wanglne.github.io/" },
+  {
+    name: "Rui Qian",
+    affiliation: "2",
+    url: "https://openreview.net/profile?id=~Rui_Qian5",
+  },
+  { name: "Yu Li", affiliation: "3", url: "https://elevenliy.github.io/" },
+  {
+    name: "Haoyang Yao",
+    affiliation: "4",
+    url: "https://openreview.net/profile?id=%7EHaoyang_Yao1",
+  },
+  { name: "Wenjie Wang", affiliation: "1,†", url: "https://wwj95.github.io/" },
+];
+const affiliations = [
+  "ShanghaiTech University",
+  "Fudan University",
+  "Southeast University",
+  "Peking University",
+];
+const links = [
+  {
+    name: "Paper",
+    url: "https://arxiv.org/pdf/2610.10623",
+    icon: "ri:file-pdf-2-line",
+  },
+  {
+    name: "arXiv",
+    url: "https://arxiv.org/abs/2610.10623",
+    icon: "academicons:arxiv",
+  },
+  { name: "Code", icon: "ri:github-line" },
+  { name: "Models", icon: "huggingface" },
+];
 ---
 
-<header
-  class:list={[
-    "full-bleed relative mb-12",
-    hasBackground && "-mt-16 pt-24 pb-28",
-  ]}
->
-  {
-    hasBackground && (
-      <div class="cover absolute inset-0 z-0 overflow-hidden">
-        <slot name="background" />
-        {/* Darken the cover so the white header text stays legible. */}
-        <div class="absolute inset-0 bg-black/40" />
-      </div>
-    )
-  }
-  <div
-    class:list={[
-      "relative z-10 mx-auto flex max-w-[50rem] flex-col items-center px-6 text-center",
-      hasBackground
-        ? "gap-10 text-white prose-headings:text-white [text-shadow:0_0_8px_rgba(0,0,0,0.6)]"
-        : "gap-6",
-    ]}
-  >
-    <h1 class="my-0 text-5xl font-medium">{title}</h1>
-    <div class="flex flex-row flex-wrap justify-center gap-x-8 gap-y-4">
+<header class="publication-header full-bleed">
+  <div class="header-inner">
+    <h1 class="publication-title">
+      <span class="title-opening"
+        >Recurrent <span class="keep-together">Self-Improvement:</span></span
+      >
+      <span
+        >Dynamic <span class="keep-together">Cross-Loop</span>
+        <span class="keep-together">On-Policy</span> Distillation</span
+      >
+      <span>for Looped Language Models</span>
+    </h1>
+    <div class="authors">
       {
+        // prettier-ignore
         authors.map((author) => (
-          <div class="flex flex-col items-center text-center">
-            <div class="flex flex-row text-xl">
-              {author.url ? (
-                <a class:list={[hasBackground && "not-prose text-blue-200 hover:text-blue-100 underline decoration-dashed underline-offset-4 hover:decoration-solid"]} href={author.url}>{author.name}</a>
-              ) : (
-                author.name
-              )}
-              {author.notes && (
-                <sup class="text-xl">
-                  {author.notes.map(
-                    (note, index, array) =>
-                      note + (index < array.length - 1 ? "," : ""),
-                  )}
-                </sup>
-              )}
-            </div>
-            {author.institution && <div>{author.institution}</div>}
-          </div>
+          <span>{author.url ? <a href={author.url} target="_blank" rel="noopener noreferrer">{author.name}</a> : author.name}<sup>{author.affiliation}</sup></span>
         ))
       }
     </div>
-    {conference && <div>{conference}</div>}
-    {
-      notes && (
-        <div class="text-center text-sm">
-          {
-            // prettier-ignore
-            notes.map((note, index, array) => (
-              <span>
-                <sup>{note.symbol}</sup>{note.text}{index < array.length - 1 ? "," : ""}
-              </span>
-            ))
-          }
-        </div>
-      )
-    }
-    {
-      links && (
-        <div class="not-prose flex flex-row flex-wrap justify-center gap-2">
-          {links.map((link) => (
-            <a
-              href={link.url}
-              class:list={["flex flex-row items-center gap-2 rounded-full px-5 py-2 text-lg hover:no-underline",
-                hasBackground ? "bg-white hover:bg-zinc-200 text-zinc-800 text-shadow-none shadow-[0_0_8px_rgba(0,0,0,0.6)]" : "bg-zinc-800 text-white hover:bg-black dark:text-zinc-900 dark:hover:bg-zinc-50 dark:bg-zinc-200"
-              ]}
-            >
-              {link.icon && <Icon name={link.icon} />}
-              <span>{link.name}</span>
+    <div class="affiliations">
+      {
+        // prettier-ignore
+        affiliations.map((name, i) => (
+          <span><sup>{i + 1}</sup>{name}</span>
+        ))
+      }
+    </div>
+    <p class="author-notes"><sup>†</sup>Corresponding author.</p>
+    <div class="publication-links" aria-label="Research resources">
+      {
+        links.map((link) =>
+          link.url ? (
+            <a href={link.url} target="_blank" rel="noopener noreferrer">
+              <>
+                <Icon name={link.icon} />
+                <span>{link.name}</span>
+              </>
             </a>
-          ))}
-        </div>
-      )
-    }
+          ) : (
+            <span
+              class="resource-pending"
+              aria-label={`${link.name}: Coming soon`}
+            >
+              <>
+                <Icon name={link.icon} />
+                <span>{link.name}</span>
+                <small>Coming soon</small>
+              </>
+            </span>
+          ),
+        )
+      }
+    </div>
   </div>
 </header>
-
-<style>
-  /* Make the slotted cover (Picture/Video, or a plain <img>/<video>) fill the
-     header, overriding those components' figure styling. Scoped to `.cover`.
-     Kept as scoped CSS because expressing it with Tailwind would require
-     repeating the descendant variant on every declaration. */
-  .cover :global(:is(picture, img, video)) {
-    position: absolute;
-    inset: 0;
-    /* Zero the margin that `prose` adds to media elements, which would
-       otherwise push the cover down and expose the page background. */
-    margin: 0;
-    width: 100%;
-    height: 100%;
-    max-width: none;
-    max-height: none;
-    object-fit: cover;
-    border-radius: 0;
-  }
-</style>

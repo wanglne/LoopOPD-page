@@ -1,0 +1,31 @@
+---
+const sections = ["Impact", "Overview", "Methodology", "Results", "Citation"];
+---
+
+<nav
+  class="section-nav full-bleed not-prose"
+  aria-label="On this page"
+  data-section-nav
+>
+  <div class="section-nav-inner">
+    {
+      sections.map((section) => (
+        <a href={`#${section.toLowerCase()}`}>{section}</a>
+      ))
+    }
+  </div>
+</nav>
+
+<script>
+  const navigation = document.querySelector<HTMLElement>("[data-section-nav]");
+  if (navigation) {
+    const updateOffset = () => {
+      document.documentElement.style.setProperty(
+        "--section-navigation-height",
+        `${navigation.getBoundingClientRect().height}px`,
+      );
+    };
+    updateOffset();
+    new ResizeObserver(updateOffset).observe(navigation);
+  }
+</script>

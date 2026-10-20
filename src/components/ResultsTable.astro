@@ -1,0 +1,135 @@
+---
+interface Row {
+  method: string;
+  values: number[];
+  model?: string;
+}
+interface Props {
+  rows: Row[];
+  category: "math" | "transfer";
+  reference?: boolean;
+  label: string;
+}
+const { rows, category, reference = false, label } = Astro.props;
+const maxima = rows[0].values.map((_, i) =>
+  Math.max(...rows.map((row) => row.values[i])),
+);
+const transferHeaders = ["MMLU", "MBPP", "MBPP+", "HumanEval", "HumanEval+"];
+---
+
+<div
+  class="table-scroll"
+  tabindex="0"
+  role="region"
+  aria-label={`${label}; scroll horizontally for all columns`}
+>
+  <table
+    class:list={[
+      "results-table",
+      {
+        "reference-table": reference,
+        "transfer-table": category === "transfer",
+      },
+    ]}
+  >
+    <caption class="sr-only"
+      >{label}. All values are percentages; higher is better.</caption
+    >
+    <colgroup
+      ><col class="method-column" />{
+        reference && <col class="reference-method-column" />
+      }</colgroup
+    >
+    <thead>
+      <tr>
+        <th scope="col" rowspan={category === "math" ? 2 : 1}
+          >{reference ? "Model" : "Method"}</th
+        >
+        {
+          reference && (
+            <th scope="col" rowspan={category === "math" ? 2 : 1}>
+              Method
+            </th>
+          )
+        }
+        {
+          category === "math" ? (
+            <>
+              {["AIME 2024", "AIME 2025", "AIME 2026"].map((name) => (
+                <th scope="colgroup" colspan="2">
+                  {name}
+                </th>
+              ))}
+              <th scope="col" rowspan="2">
+                Olympiad
+                <br />
+                Bench
+              </th>
+              <th scope="col" rowspan="2">
+                Beyond
+                <br />
+                AIME
+              </th>
+            </>
+          ) : (
+            transferHeaders.map((name) => <th scope="col">{name}</th>)
+          )
+        }
+      </tr>
+      {
+        category === "math" && (
+          <tr>
+            {[0, 1, 2].map(() => (
+              <>
+                <th scope="col">Avg@16</th>
+                <th scope="col">Pass@16</th>
+              </>
+            ))}
+          </tr>
+        )
+      }
+    </thead>
+    <tbody>
+      {
+        rows.map((row, i) => (
+          <tr
+            class:list={{
+              "loopopd-row": row.method === "LoopOPD",
+              "dynamic-row": row.method === "D-LoopOPD",
+            }}
+          >
+            {reference ? (
+              <>
+                {(i === 0 || rows[i - 1].model !== row.model) && (
+                  <th
+                    scope="rowgroup"
+                    rowspan={rows.filter((r) => r.model === row.model).length}
+                  >
+                    {row.model}
+                  </th>
+                )}
+                <td class="reference-method">{row.method}</td>
+              </>
+            ) : (
+              <th scope="row">
+                {row.method}
+                {row.method.includes("LoopOPD") && (
+                  <small class="ours">(Ours)</small>
+                )}
+              </th>
+            )}
+            {row.values.map((value, col) => (
+              <td>
+                {!reference && value === maxima[col] ? (
+                  <strong>{value.toFixed(2)}</strong>
+                ) : (
+                  value.toFixed(2)
+                )}
+              </td>
+            ))}
+          </tr>
+        ))
+      }
+    </tbody>
+  </table>
+</div>

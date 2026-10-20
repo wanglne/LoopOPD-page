@@ -1,0 +1,169 @@
+---
+import results from "../data/results.json";
+import ResultsTable from "./ResultsTable.astro";
+const scales = ["2.6B", "1.4B"] as const;
+const categories = [
+  {
+    id: "math",
+    name: "Mathematical reasoning",
+    title: "Mathematical reasoning ↑",
+    source: "Table 2",
+    note: "All values are percentages. AIME reports Avg@16 and Pass@16; OlympiadBench and BeyondAIME report accuracy. Maximum response length: 31,744 tokens. Bold values are best within the selected Ouro model group.",
+  },
+  {
+    id: "transfer",
+    name: "General reasoning & code",
+    title: "General reasoning and code generation ↑",
+    source: "Table 3",
+    note: "All values are percentages. MMLU reports accuracy; MBPP, MBPP+, HumanEval, and HumanEval+ report Pass@1. Bold values are best within the selected Ouro model group. Post-training uses only DAPO-Math-17k.",
+  },
+] as const;
+---
+
+<div class="results-explorer wide-visual" data-results>
+  <div class="results-toolbar">
+    <span class="eyebrow">Compare model performance</span>
+    <label for="model-scale"
+      >Model
+      <select id="model-scale">
+        {
+          scales.map((scale) => (
+            <option value={scale}>Ouro-{scale}-Thinking</option>
+          ))
+        }
+      </select>
+    </label>
+  </div>
+  <div class="result-tabs" role="tablist" aria-label="Evaluation category">
+    {
+      categories.map((category, i) => (
+        <button
+          type="button"
+          role="tab"
+          id={`tab-${category.id}`}
+          aria-controls={`panel-${category.id}`}
+          aria-selected={i === 0}
+          tabindex={i === 0 ? 0 : -1}
+          data-category={category.id}
+        >
+          {category.name}
+        </button>
+      ))
+    }
+  </div>
+  {
+    categories.map((category, i) => (
+      <section
+        role="tabpanel"
+        id={`panel-${category.id}`}
+        aria-labelledby={`tab-${category.id}`}
+        hidden={i !== 0}
+        tabindex="0"
+      >
+        <div class="table-heading">
+          <>
+            <h3>{category.title}</h3>
+            <span>{category.source}</span>
+          </>
+        </div>
+        {scales.map((scale, j) => (
+          <div data-scale={scale} hidden={j !== 0}>
+            <ResultsTable
+              rows={results[category.id][scale]}
+              category={category.id}
+              label={`Ouro-${scale}-Thinking, terminal loop 4: ${category.name}`}
+            />
+          </div>
+        ))}
+        <p class="table-note">{category.note}</p>
+        <details class="reference-results">
+          <summary>
+            Compare with Qwen models <span>Thinking mode</span>
+          </summary>
+          <ResultsTable
+            rows={results[category.id].references}
+            category={category.id}
+            reference
+            label={`Qwen reference models in thinking mode: ${category.name}`}
+          />
+          <p class="table-note">
+            Qwen comparison results from {category.source}. Qwen models use
+            thinking mode. The selected Ouro results above use terminal loop d =
+            4.
+          </p>
+        </details>
+      </section>
+    ))
+  }
+  <noscript
+    ><p class="table-note">
+      Enable JavaScript to switch models and evaluation categories. Complete
+      results are available in the <a
+        href="https://arxiv.org/pdf/2610.10623"
+        target="_blank"
+        rel="noopener noreferrer">paper</a
+      >.
+    </p></noscript
+  >
+</div>
+<script>
+  document.querySelectorAll<HTMLElement>("[data-results]").forEach((root) => {
+    const tabs = Array.from(
+      root.querySelectorAll<HTMLButtonElement>('[role="tab"]'),
+    );
+    const activate = (tab: HTMLButtonElement) => {
+      // Keep the document height stable while changing the visible panel.
+      const selectedPanel = root.querySelector<HTMLElement>(
+        `#${tab.getAttribute("aria-controls")}`,
+      );
+      if (selectedPanel) selectedPanel.hidden = false;
+      tabs.forEach((button) => {
+        const selected = button === tab;
+        button.setAttribute("aria-selected", String(selected));
+        button.tabIndex = selected ? 0 : -1;
+        const panel = root.querySelector<HTMLElement>(
+          `#${button.getAttribute("aria-controls")}`,
+        );
+        if (panel && !selected) panel.hidden = true;
+      });
+    };
+    const select = root.querySelector<HTMLSelectElement>("select")!;
+    const changeScale = () =>
+      root.querySelectorAll<HTMLElement>("[data-scale]").forEach((panel) => {
+        panel.hidden = panel.dataset.scale !== select.value;
+      });
+    select.addEventListener("change", changeScale);
+    document
+      .querySelectorAll<HTMLElement>("[data-result-category]")
+      .forEach((link) => {
+        link.addEventListener("click", () => {
+          const tab = tabs.find(
+            (button) => button.dataset.category === link.dataset.resultCategory,
+          );
+          if (tab) activate(tab);
+          select.value = "2.6B";
+          changeScale();
+        });
+      });
+    tabs.forEach((tab, index) => {
+      tab.addEventListener("click", () => activate(tab));
+      tab.addEventListener("keydown", (event) => {
+        const offset =
+          event.key === "ArrowRight" ? 1 : event.key === "ArrowLeft" ? -1 : 0;
+        const next =
+          event.key === "Home"
+            ? tabs[0]
+            : event.key === "End"
+              ? tabs[tabs.length - 1]
+              : offset
+                ? tabs[(index + offset + tabs.length) % tabs.length]
+                : null;
+        if (next) {
+          event.preventDefault();
+          activate(next);
+          next.focus({ preventScroll: true });
+        }
+      });
+    });
+  });
+</script>

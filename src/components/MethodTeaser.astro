@@ -1,0 +1,12 @@
+---
+import MethodTeaser from "./MethodTeaser";
+const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+---
+
+<figure class="method-teaser wide-visual not-prose">
+  <MethodTeaser
+    src={`${base}/figures/loopopd-method.svg`}
+    alt="LoopOPD and D-LoopOPD: the student generates a rollout, the deeper teacher supplies supervision, and reverse-KL distillation updates the student. LoopOPD keeps its teacher frozen; D-LoopOPD refreshes its teacher through shared parameter updates."
+    client:visible
+  />
+</figure>

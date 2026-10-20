@@ -1,0 +1,288 @@
+---
+import { analyses } from "../data/analysis";
+const maxima = analyses.map((item) =>
+  item.labels.map((_, column) =>
+    Math.max(...item.series.map((series) => series.values[column])),
+  ),
+);
+const x = (i: number, count: number) => 62 + (i * 540) / (count - 1);
+const y = (value: number, analysisId: string) => {
+  const min = analysisId === "student" ? 60 : 0;
+  return 332 - ((value - min) / (80 - min)) * 292;
+};
+---
+
+<div id="analysis" class="analysis-explorer" data-analysis>
+  <div class="figure-toolbar">
+    <span>Explore recurrent self-improvement</span>
+  </div>
+  <div
+    class="result-tabs analysis-tabs"
+    role="tablist"
+    aria-label="Analysis topic"
+  >
+    {
+      analyses.map((item, i) => (
+        <button
+          type="button"
+          role="tab"
+          id={`analysis-tab-${item.id}`}
+          aria-controls={`analysis-panel-${item.id}`}
+          aria-selected={i === 0}
+          tabindex={i === 0 ? 0 : -1}
+          data-analysis-id={item.id}
+        >
+          {item.label}
+        </button>
+      ))
+    }
+  </div>
+  {
+    analyses.map((item, i) => (
+      <section
+        role="tabpanel"
+        id={`analysis-panel-${item.id}`}
+        aria-labelledby={`analysis-tab-${item.id}`}
+        hidden={i !== 0}
+        tabindex="0"
+      >
+        <div class="plot-wrap">
+          <ul class="plot-legend" aria-label="Chart legend">
+            {item.series.map((series) => (
+              <li>
+                <span style={`--series-color:${series.color}`} />
+                {series.name}
+              </li>
+            ))}
+          </ul>
+          <svg
+            class="analysis-plot"
+            viewBox="0 0 660 400"
+            role="img"
+            aria-label={`${item.title}. ${item.source}. Exact values are available in the data table below.`}
+          >
+            <text class="plot-axis-title" x="62" y="22">
+              Avg@16 (%)
+            </text>
+            {(item.id === "student"
+              ? [60, 65, 70, 75, 80]
+              : [0, 20, 40, 60, 80]
+            ).map((tick, tickIndex) => (
+              <g>
+                <line
+                  x1="62"
+                  x2="602"
+                  y1={y(tick, item.id)}
+                  y2={y(tick, item.id)}
+                  stroke="#e2e6eb"
+                  stroke-dasharray={tickIndex === 0 ? undefined : "4 5"}
+                />
+                <text
+                  class="plot-tick"
+                  x="45"
+                  y={y(tick, item.id) + 5}
+                  text-anchor="end"
+                >
+                  {tick}
+                </text>
+              </g>
+            ))}
+            {item.labels.map((label, index) => (
+              <text
+                class="plot-tick"
+                x={x(index, item.labels.length)}
+                y="358"
+                text-anchor="middle"
+              >
+                {label}
+              </text>
+            ))}
+            <text class="plot-axis-title" x="332" y="390" text-anchor="middle">
+              {item.axis}
+            </text>
+            {item.series.map((series, index) => (
+              <g>
+                <polyline
+                  fill="none"
+                  stroke={series.color}
+                  stroke-width={index === item.series.length - 1 ? 3.5 : 2.5}
+                  stroke-linejoin="round"
+                  stroke-linecap="round"
+                  stroke-dasharray={
+                    item.id === "student" && index === 0 ? "8 6" : undefined
+                  }
+                  points={series.values
+                    .map(
+                      (v, j) => `${x(j, item.labels.length)},${y(v, item.id)}`,
+                    )
+                    .join(" ")}
+                />
+                {item.id === "student" && index === 0 && (
+                  <text
+                    class="plot-value"
+                    x={x(0, item.labels.length)}
+                    y={y(series.values[0], item.id) - 14}
+                    text-anchor="start"
+                    fill={series.color}
+                  >
+                    {series.values[0].toFixed(2)}
+                  </text>
+                )}
+                {series.values.map((value, point) => (
+                  <g>
+                    {!(item.id === "student" && index === 0) && (
+                      <circle
+                        cx={x(point, item.labels.length)}
+                        cy={y(value, item.id)}
+                        r={index === item.series.length - 1 ? 5 : 3.5}
+                        fill="white"
+                        stroke={series.color}
+                        stroke-width="2.5"
+                      >
+                        <title>
+                          {series.name}, {item.labels[point]}:{" "}
+                          {value.toFixed(2)}%
+                        </title>
+                      </circle>
+                    )}
+                    {index === item.series.length - 1 && (
+                      <text
+                        class="plot-value"
+                        x={x(point, item.labels.length)}
+                        y={y(value, item.id) - 14}
+                        text-anchor={
+                          item.id === "student" && point === 0
+                            ? "start"
+                            : "middle"
+                        }
+                        fill={series.color}
+                      >
+                        {value.toFixed(2)}
+                      </text>
+                    )}
+                  </g>
+                ))}
+              </g>
+            ))}
+          </svg>
+        </div>
+        <div class="analysis-description">
+          <h3>{item.title}</h3>
+          <p>{item.description}</p>
+          <p class="plot-source">{item.source}</p>
+        </div>
+        <details class="chart-data">
+          <summary>View exact values</summary>
+          <div
+            class="table-scroll"
+            tabindex="0"
+            role="region"
+            aria-label={`${item.label} data; scroll horizontally for all columns`}
+          >
+            <table>
+              <caption class="sr-only">{item.source}</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Method</th>
+                  {item.labels.map((label) => (
+                    <th scope="col">
+                      {item.id === "student" ? `${label} as student` : label}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {item.series.map((series) => (
+                  <tr
+                    class:list={{
+                      "loopopd-row": series.name === "LoopOPD",
+                      "dynamic-row":
+                        series.name === "D-LoopOPD" ||
+                        series.name === "Trained terminal loop",
+                    }}
+                  >
+                    <th scope="row">
+                      {series.name}
+                      {(series.name.includes("LoopOPD") ||
+                        series.name === "Trained terminal loop") && (
+                        <small class="ours">(Ours)</small>
+                      )}
+                    </th>
+                    {series.values.map((value, column) => (
+                      <td>
+                        {value === maxima[i][column] ? (
+                          <strong>{value.toFixed(2)}</strong>
+                        ) : (
+                          value.toFixed(2)
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p class="table-note">
+            All values are percentages. AIME 2024 Avg@16; higher is better. Bold
+            values are best within each column.
+          </p>
+        </details>
+      </section>
+    ))
+  }
+</div>
+<script>
+  document.querySelectorAll<HTMLElement>("[data-analysis]").forEach((root) => {
+    const tabs = Array.from(
+      root.querySelectorAll<HTMLButtonElement>('[role="tab"]'),
+    );
+    const activate = (tab: HTMLButtonElement) => {
+      // Keep a panel visible throughout the switch so the document never
+      // briefly shrinks and clamps the current scroll position.
+      const selectedPanel = root.querySelector<HTMLElement>(
+        `#${tab.getAttribute("aria-controls")}`,
+      );
+      if (selectedPanel) selectedPanel.hidden = false;
+      tabs.forEach((button) => {
+        const selected = button === tab;
+        button.setAttribute("aria-selected", String(selected));
+        button.tabIndex = selected ? 0 : -1;
+        const panel = root.querySelector<HTMLElement>(
+          `#${button.getAttribute("aria-controls")}`,
+        );
+        if (panel && !selected) panel.hidden = true;
+      });
+    };
+    tabs.forEach((tab, index) => {
+      tab.addEventListener("click", () => activate(tab));
+      tab.addEventListener("keydown", (event) => {
+        const offset =
+          event.key === "ArrowRight" ? 1 : event.key === "ArrowLeft" ? -1 : 0;
+        const next =
+          event.key === "Home"
+            ? tabs[0]
+            : event.key === "End"
+              ? tabs[tabs.length - 1]
+              : offset
+                ? tabs[(index + offset + tabs.length) % tabs.length]
+                : null;
+        if (next) {
+          event.preventDefault();
+          activate(next);
+          next.focus({ preventScroll: true });
+        }
+      });
+    });
+    document
+      .querySelectorAll<HTMLElement>("[data-analysis-target]")
+      .forEach((link) =>
+        link.addEventListener("click", () => {
+          const tab = tabs.find(
+            (button) =>
+              button.dataset.analysisId === link.dataset.analysisTarget,
+          );
+          if (tab) activate(tab);
+        }),
+      );
+  });
+</script>

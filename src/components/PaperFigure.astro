@@ -1,0 +1,17 @@
+---
+import AnimatedFigure from "./AnimatedFigure";
+interface Props {
+  name: "intro" | "method";
+  alt: string;
+}
+const { name, alt } = Astro.props;
+const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+const src = `${base}/figures/loopopd-${name}.svg`;
+---
+
+<figure
+  class="paper-figure wide-visual"
+  aria-labelledby={`figure-title-${name}`}
+>
+  <AnimatedFigure name={name} alt={alt} src={src} client:visible />
+</figure>
